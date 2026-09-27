@@ -1,0 +1,82 @@
+%% MVP data model. Later migrations create these tables one at a time.
+%% seats_taken must stay <= capacity. Money is integer poisha.
+erDiagram
+  users ||--o| wallets : "TeslaPay"
+  users ||--o| vehicles : drives
+  users ||--o{ ride_requests : requests
+  areas ||--o{ ride_requests : pickup
+  areas ||--o{ ride_requests : dropoff
+  vehicles ||--o{ pools : carries
+  users ||--o{ pools : accepts
+  pools |o--o{ ride_requests : "optional pool"
+  pools ||--o{ pool_members : includes
+  ride_requests ||--o| pool_members : joins
+  users ||--o{ pool_members : rides
+  ride_requests ||--o| payments : settles
+  users ||--o{ ride_events : acts
+  pools |o--o{ ride_events : logs
+  ride_requests |o--o{ ride_events : logs
+
+  users {
+    uuid id PK
+    text email UK
+    text role
+    text password_hash
+  }
+  wallets {
+    uuid user_id PK
+    int balance_poisha
+  }
+  vehicles {
+    uuid id PK
+    uuid driver_id FK
+    text name
+    int capacity
+    bool is_online
+  }
+  areas {
+    text code PK
+    text name
+    float lat
+    float lng
+  }
+  ride_requests {
+    uuid id PK
+    uuid passenger_id FK
+    text pickup_code FK
+    text destination_code FK
+    uuid pool_id FK
+    int seats
+    int fare_poisha
+    text status
+  }
+  pools {
+    uuid id PK
+    uuid vehicle_id FK
+    uuid driver_id FK
+    int capacity
+    int seats_taken
+    text status
+  }
+  pool_members {
+    uuid id PK
+    uuid pool_id FK
+    uuid ride_request_id FK
+    uuid passenger_id FK
+    int seats
+    int fare_poisha
+  }
+  ride_events {
+    uuid id PK
+    uuid actor_user_id FK
+    uuid pool_id FK
+    uuid ride_request_id FK
+    text from_status
+    text to_status
+  }
+  payments {
+    uuid id PK
+    uuid ride_request_id FK
+    int amount_poisha
+    text method
+  }
