@@ -2,6 +2,7 @@ import express from "express";
 import { registerAccount } from "./auth/account.js";
 import { registerLogin } from "./auth/login.js";
 import { registerSignup } from "./auth/signup.js";
+import { registerAccept } from "./rides/accept.js";
 import { registerMatches } from "./rides/matches.js";
 import { registerMyRides } from "./rides/mine.js";
 import { registerRideRequest } from "./rides/create.js";
@@ -15,6 +16,7 @@ registerAccount(app);
 registerRideRequest(app);
 registerMyRides(app);
 registerMatches(app);
+registerAccept(app);
 
 // Docker and the web app use this to check the process is up.
 app.get("/health", (_req, res) => {
