@@ -20,7 +20,7 @@ export const rideRequests = pgTable(
     poolId: uuid("pool_id").references(() => pools.id),
     seats: smallint("seats").notNull(),
     status: rideStatus("status").notNull().default("requested"),
-    // Integer poisha (1 BDT = 100). Null until the quote is stored.
+    // Solo estimate in poisha (1 BDT = 100). A pool may change it later.
     farePoisha: integer("fare_poisha"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
