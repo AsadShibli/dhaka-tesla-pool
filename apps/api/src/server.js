@@ -1,7 +1,10 @@
 import express from "express";
+import { registerLogin } from "./auth/login.js";
 
 // The HTTP app. Ride routes get added in later slices.
 const app = express();
+app.use(express.json());
+registerLogin(app);
 
 // Docker and the web app use this to check the process is up.
 app.get("/health", (_req, res) => {
