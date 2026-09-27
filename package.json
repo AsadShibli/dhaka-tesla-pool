@@ -1,0 +1,8 @@
+{
+  "name": "dhaka-tesla-pool",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
