@@ -1,9 +1,11 @@
 import express from "express";
 import { registerLogin } from "./auth/login.js";
+import { registerSignup } from "./auth/signup.js";
 
 // The HTTP app. Ride routes get added in later slices.
 const app = express();
 app.use(express.json());
+registerSignup(app);
 registerLogin(app);
 
 // Docker and the web app use this to check the process is up.
