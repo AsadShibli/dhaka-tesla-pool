@@ -2,6 +2,14 @@
 
 Passengers request a seat. Jashim can pool them in Bullet when the pickup matches and the drop-offs are within 2 km.
 
+## Video
+
+No recording is linked yet. Replace this paragraph with the video URL after it is made. Suggested timing, under six minutes:
+
+- 0:00–1:00. Nusrat and Rafiq both leave Banani. Jashim can carry them in Bullet when the drop-offs are close. Each person sees only their own fare.
+- 1:00–3:00. Show the site, the API, and the diagram in `docs/erd`. One decision: share only when destinations are at most 2 km apart. One trade-off: the last seat is one Postgres transaction, not a separate lock service.
+- 3:00–6:00. Sign in as Nusrat and request Banani to Mohakhali. Sign in as Jashim, go online, accept Rafiq when he fits, then arrive, start, and complete. Show that a second claim on the last seat is refused, and that payment is cash or TeslaPay.
+
 ## Architecture
 
 The browser talks only to the Next.js app in `apps/web`. Those pages collect sign-in and ride actions. They copy the login cookie and forward the call to Express, so the token stays on the site.
