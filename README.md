@@ -16,6 +16,10 @@ The rules in `packages/domain` do not touch the database.
 
 Jashim accepts a waiting ride (`matched`), marks arrival (`driver_arrived`), starts it (`started`), then completes it. A passenger can cancel until it starts. After completion they pay cash, or TeslaPay debits their wallet.
 
+## Data model
+
+The tables are drawn in [docs/erd/erd.svg](docs/erd/erd.svg). The source is [docs/erd/erd.mmd](docs/erd/erd.mmd). Users, vehicles, and areas come first. A ride request can join one pool. Pool members, the append-only ride events, wallets, and payments hang off those rows.
+
 ## Run
 
 Start the database, then load the tables and the demo cast through that database. Do not use another Postgres that happens to be on port 5432.
