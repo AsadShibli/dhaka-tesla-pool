@@ -33,6 +33,8 @@ async function acceptRide(driverId, rideId) {
   return db.transaction(async (tx) => {
     const [vehicle] = await tx.select().from(vehicles).where(eq(vehicles.driverId, driverId));
     if (!vehicle) fail(404, "driver has no tesla");
+    // An open trip can still finish. A new ride waits until the Tesla is online.
+    if (!vehicle.isOnline) fail(409, "driver is offline");
     const [ride] = await tx.select().from(rideRequests).where(and(
       eq(rideRequests.id, rideId),
       eq(rideRequests.status, "requested"),
