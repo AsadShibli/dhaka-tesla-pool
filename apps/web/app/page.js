@@ -1,3 +1,4 @@
+import { RequestRide } from "./request-ride";
 import { SignIn } from "./sign-in";
 
 // Server page. It asks Express if the API is up, then shows that one line.
@@ -20,6 +21,7 @@ export default async function HomePage() {
       <h1>Dhaka Tesla Pool</h1>
       <p>API is {apiStatus}.</p>
       <SignIn />
+      <RequestRide />
     </main>
   );
 }
