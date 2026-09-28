@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-// Marks arrival only while the trip is still accepted. Later steps come after.
+// Arrival while accepted. Start only after the driver has arrived.
 export function OpenTrip() {
   const [pool, setPool] = useState(undefined);
   const [hidden, setHidden] = useState(false);
@@ -36,6 +36,17 @@ export function OpenTrip() {
     load();
   }
 
+  async function start() {
+    const response = await fetch(`/api/pools/${pool.id}/start`, { method: "POST" });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError(body.error || "Could not start the trip");
+      return;
+    }
+    setError("");
+    load();
+  }
+
   useEffect(() => {
     load();
     window.addEventListener("signed-in", load);
@@ -56,6 +67,9 @@ export function OpenTrip() {
       <p>{pool.status}, {pool.seatsTaken} of {pool.capacity} seats</p>
       {pool.status === "accepted" ? (
         <button type="button" onClick={arrive}>Mark arrived</button>
+      ) : null}
+      {pool.status === "driver_arrived" ? (
+        <button type="button" onClick={start}>Start trip</button>
       ) : null}
       {error ? <p>{error}</p> : null}
     </section>
