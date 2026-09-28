@@ -6,6 +6,7 @@ import { registerAccept } from "./rides/accept.js";
 import { registerArrive } from "./rides/arrive.js";
 import { registerMatches } from "./rides/matches.js";
 import { registerMyRides } from "./rides/mine.js";
+import { registerCancel } from "./rides/cancel.js";
 import { registerComplete } from "./rides/complete.js";
 import { registerPay } from "./rides/pay.js";
 import { registerRideRequest } from "./rides/create.js";
@@ -25,6 +26,7 @@ registerArrive(app);
 registerStart(app);
 registerComplete(app);
 registerPay(app);
+registerCancel(app);
 
 // Docker and the web app use this to check the process is up.
 app.get("/health", (_req, res) => {
