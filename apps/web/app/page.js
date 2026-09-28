@@ -1,4 +1,5 @@
 import { DriverOnline } from "./driver-online";
+import { FinishedTrips } from "./finished-trips";
 import { MyRides } from "./my-rides";
 import { OpenTrip } from "./open-trip";
 import { RequestRide } from "./request-ride";
@@ -28,6 +29,7 @@ export default async function HomePage() {
       <DriverOnline />
       <WaitingRides />
       <OpenTrip />
+      <FinishedTrips />
       <RequestRide />
       <MyRides />
     </main>

@@ -55,6 +55,7 @@ export function OpenTrip() {
       return;
     }
     setError("");
+    window.dispatchEvent(new Event("trip-changed"));
     load();
   }
 
