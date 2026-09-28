@@ -12,6 +12,7 @@ import { registerComplete } from "./rides/complete.js";
 import { registerPay } from "./rides/pay.js";
 import { registerRideRequest } from "./rides/create.js";
 import { registerStart } from "./rides/start.js";
+import { registerWaiting } from "./rides/waiting.js";
 import { registerOnline } from "./vehicles/online.js";
 
 // The HTTP app. Ride routes get added in later slices.
@@ -23,6 +24,7 @@ registerAccount(app);
 registerRideRequest(app);
 registerMyRides(app);
 registerHistory(app);
+registerWaiting(app);
 registerMatches(app);
 registerOnline(app);
 registerAccept(app);

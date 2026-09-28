@@ -2,6 +2,7 @@ import { DriverOnline } from "./driver-online";
 import { MyRides } from "./my-rides";
 import { RequestRide } from "./request-ride";
 import { SignIn } from "./sign-in";
+import { WaitingRides } from "./waiting-rides";
 
 // Server page. It asks Express if the API is up, then shows that one line.
 const API_URL = process.env.API_URL || "http://localhost:4000";
@@ -24,6 +25,7 @@ export default async function HomePage() {
       <p>API is {apiStatus}.</p>
       <SignIn />
       <DriverOnline />
+      <WaitingRides />
       <RequestRide />
       <MyRides />
     </main>
