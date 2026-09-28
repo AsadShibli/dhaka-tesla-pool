@@ -33,6 +33,7 @@ export function WaitingRides() {
       return;
     }
     setError("");
+    window.dispatchEvent(new Event("trip-changed"));
     load();
   }
 

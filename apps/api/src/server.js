@@ -14,6 +14,7 @@ import { registerRideRequest } from "./rides/create.js";
 import { registerStart } from "./rides/start.js";
 import { registerWaiting } from "./rides/waiting.js";
 import { registerOnline } from "./vehicles/online.js";
+import { registerOpenPool } from "./rides/openPool.js";
 
 // The HTTP app. Ride routes get added in later slices.
 const app = express();
@@ -28,6 +29,7 @@ registerWaiting(app);
 registerMatches(app);
 registerOnline(app);
 registerAccept(app);
+registerOpenPool(app);
 registerArrive(app);
 registerStart(app);
 registerComplete(app);

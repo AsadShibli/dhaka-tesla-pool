@@ -1,5 +1,6 @@
 import { DriverOnline } from "./driver-online";
 import { MyRides } from "./my-rides";
+import { OpenTrip } from "./open-trip";
 import { RequestRide } from "./request-ride";
 import { SignIn } from "./sign-in";
 import { WaitingRides } from "./waiting-rides";
@@ -26,6 +27,7 @@ export default async function HomePage() {
       <SignIn />
       <DriverOnline />
       <WaitingRides />
+      <OpenTrip />
       <RequestRide />
       <MyRides />
     </main>
