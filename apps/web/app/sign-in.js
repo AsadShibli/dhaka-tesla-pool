@@ -22,6 +22,7 @@ export function SignIn() {
       return;
     }
     setName(body.name);
+    window.dispatchEvent(new Event("rides-changed"));
   }
 
   if (name) return <p>Signed in as {name}.</p>;

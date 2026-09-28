@@ -37,6 +37,7 @@ export function RequestRide() {
       return;
     }
     setRide(body);
+    window.dispatchEvent(new Event("rides-changed"));
   }
 
   if (ride) {

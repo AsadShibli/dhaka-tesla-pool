@@ -1,3 +1,4 @@
+import { MyRides } from "./my-rides";
 import { RequestRide } from "./request-ride";
 import { SignIn } from "./sign-in";
 
@@ -22,6 +23,7 @@ export default async function HomePage() {
       <p>API is {apiStatus}.</p>
       <SignIn />
       <RequestRide />
+      <MyRides />
     </main>
   );
 }
