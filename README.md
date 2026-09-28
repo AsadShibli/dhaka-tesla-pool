@@ -56,3 +56,12 @@ npm test
 ```
 
 The fare check runs without the API. The ride checks are skipped when the API is down.
+
+## AI usage
+
+Cursor was used to draft the schema, routes, pages, and tests, one small slice at a time, so each commit stays reviewable. The fare numbers, seat limit, and status jumps were checked by running them, not by accepting the draft.
+
+Accepted: the last seat is settled inside one Postgres transaction. The update is kept only when `seats_taken` plus the new seats still fits Bullet’s capacity. A separate lock service was not added.
+
+Rejected: matching by whether the second drop-off is only a little farther than the farthest stop. That would have paired Banani to Dhanmondi with Banani to Mohakhali, because Mohakhali sits nearly on the way. Those destinations are about 4 km apart, so they do not share. Sharing requires the same pickup and a destination-to-destination gap of at most 2 km.
+
