@@ -7,6 +7,7 @@ import { registerArrive } from "./rides/arrive.js";
 import { registerMatches } from "./rides/matches.js";
 import { registerMyRides } from "./rides/mine.js";
 import { registerRideRequest } from "./rides/create.js";
+import { registerStart } from "./rides/start.js";
 
 // The HTTP app. Ride routes get added in later slices.
 const app = express();
@@ -19,6 +20,7 @@ registerMyRides(app);
 registerMatches(app);
 registerAccept(app);
 registerArrive(app);
+registerStart(app);
 
 // Docker and the web app use this to check the process is up.
 app.get("/health", (_req, res) => {
