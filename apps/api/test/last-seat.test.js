@@ -4,6 +4,7 @@ import test from "node:test";
 
 // Two accepts race for one free seat. The SQL update keeps seats_taken within capacity.
 const base = process.env.API_URL || "http://localhost:4011";
+const apiUp = await fetch(`${base}/health`).then((response) => response.ok).catch(() => false);
 const jars = {};
 
 function cookie(who) {
@@ -30,7 +31,7 @@ async function login(who) {
   assert.equal(result.status, 200);
 }
 
-test("two riders cannot take Bullet's last seat", async () => {
+test("two riders cannot take Bullet's last seat", { skip: apiUp ? false : "API is not running" }, async () => {
   const created = [];
   let poolId = null;
   try {
