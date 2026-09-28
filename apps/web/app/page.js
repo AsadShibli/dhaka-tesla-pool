@@ -1,3 +1,4 @@
+import { DriverOnline } from "./driver-online";
 import { MyRides } from "./my-rides";
 import { RequestRide } from "./request-ride";
 import { SignIn } from "./sign-in";
@@ -22,6 +23,7 @@ export default async function HomePage() {
       <h1>Dhaka Tesla Pool</h1>
       <p>API is {apiStatus}.</p>
       <SignIn />
+      <DriverOnline />
       <RequestRide />
       <MyRides />
     </main>

@@ -5,6 +5,22 @@ import { vehicles } from "../db/schema/vehicles.js";
 
 // Jashim flips Bullet on or off. A new ride is offered only while this is true.
 export function registerOnline(app) {
+  app.get("/vehicles/online", requireUser, async (req, res, next) => {
+    try {
+      if (req.user.role !== "driver") {
+        return res.status(403).json({ error: "only a driver can go online" });
+      }
+      const [vehicle] = await db.select({
+        name: vehicles.name,
+        isOnline: vehicles.isOnline,
+      }).from(vehicles).where(eq(vehicles.driverId, req.user.id));
+      if (!vehicle) return res.status(404).json({ error: "driver has no tesla" });
+      res.json(vehicle);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   app.post("/vehicles/online", requireUser, async (req, res, next) => {
     try {
       if (req.user.role !== "driver") {
