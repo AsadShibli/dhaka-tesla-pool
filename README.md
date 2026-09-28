@@ -2,6 +2,20 @@
 
 Passengers request a seat. Jashim can pool them in Bullet when the pickup matches and the drop-offs are within 2 km.
 
+## Architecture
+
+The browser talks only to the Next.js app in `apps/web`. Those pages collect sign-in and ride actions. They copy the login cookie and forward the call to Express, so the token stays on the site.
+
+Express in `apps/api` owns accounts, the trip, seat counts, and payment. Postgres stores the rows. Taking a seat runs in one transaction: the pool row is locked, and the update is kept only when `seats_taken` still fits Bullet’s capacity.
+
+The rules in `packages/domain` do not touch the database.
+
+- Distance is the straight line between two area centers, rounded to the nearest meter.
+- Fare, in poisha, is 4000 plus 250 for every 100 meters billed. A shared ride subtracts 15 percent, rounded half-up.
+- Two requests share a Tesla only when the pickup area is the same and the destinations are at most 2 km apart.
+
+Jashim accepts a waiting ride (`matched`), marks arrival (`driver_arrived`), starts it (`started`), then completes it. A passenger can cancel until it starts. After completion they pay cash, or TeslaPay debits their wallet.
+
 ## Run
 
 Start the database, then load the tables and the demo cast through that database. Do not use another Postgres that happens to be on port 5432.
