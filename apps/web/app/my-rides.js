@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+// Cancel stays available until the driver starts the trip.
+const canCancel = new Set(["requested", "matched", "driver_arrived"]);
+
 // This passenger's rides only. The API does not return anyone else's fare.
 export function MyRides() {
   const [rides, setRides] = useState(null);
@@ -17,6 +20,16 @@ export function MyRides() {
     }
     setError("");
     setRides(body);
+  }
+
+  async function cancel(id) {
+    const response = await fetch(`/api/rides/${id}/cancel`, { method: "POST" });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError(body.error || "Could not cancel");
+      return;
+    }
+    window.dispatchEvent(new Event("rides-changed"));
   }
 
   useEffect(() => {
@@ -36,6 +49,9 @@ export function MyRides() {
         {rides.map((ride) => (
           <li key={ride.id}>
             {ride.pickupCode} to {ride.destinationCode}: {ride.status}, {ride.farePoisha} poisha
+            {canCancel.has(ride.status) ? (
+              <button type="button" onClick={() => cancel(ride.id)}>Cancel</button>
+            ) : null}
           </li>
         ))}
       </ul>
