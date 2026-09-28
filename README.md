@@ -65,3 +65,10 @@ Accepted: the last seat is settled inside one Postgres transaction. The update i
 
 Rejected: matching by whether the second drop-off is only a little farther than the farthest stop. That would have paired Banani to Dhanmondi with Banani to Mohakhali, because Mohakhali sits nearly on the way. Those destinations are about 4 km apart, so they do not share. Sharing requires the same pickup and a destination-to-destination gap of at most 2 km.
 
+## If this served a much larger city
+
+This demo has one Postgres and one API process. The last seat is safe because one transaction locks the pool row and updates it only when the new seats still fit. Two requests that arrive together cannot both commit. That is enough for Bullet. It is not a design for a million passengers.
+
+At that size, accept calls would pile onto a few popular pool rows, so the database would spend time waiting on those locks. Waiting requests would be indexed by pickup area instead of loaded and filtered in the process. Reads such as history could use a replica. New accept attempts could wait on a queue per zone, retry when the lock is busy, and be idempotent so a retried request does not take a second seat. Real map search would replace the fixed area centers. None of that is built here.
+
+
