@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node src/server.js",
-    "test": "node --test test/last-seat.test.js ../../packages/domain/fares.test.js"
+    "test": "node --test --test-concurrency=1 test/last-seat.test.js test/complete-early.test.js ../../packages/domain/fares.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
