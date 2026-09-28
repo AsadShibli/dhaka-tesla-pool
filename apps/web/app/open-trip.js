@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-// Arrival while accepted. Start only after the driver has arrived.
+// Arrival, then start, then complete. Each button matches one status.
 export function OpenTrip() {
   const [pool, setPool] = useState(undefined);
   const [hidden, setHidden] = useState(false);
@@ -47,6 +47,17 @@ export function OpenTrip() {
     load();
   }
 
+  async function complete() {
+    const response = await fetch(`/api/pools/${pool.id}/complete`, { method: "POST" });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError(body.error || "Could not complete the trip");
+      return;
+    }
+    setError("");
+    load();
+  }
+
   useEffect(() => {
     load();
     window.addEventListener("signed-in", load);
@@ -70,6 +81,9 @@ export function OpenTrip() {
       ) : null}
       {pool.status === "driver_arrived" ? (
         <button type="button" onClick={start}>Start trip</button>
+      ) : null}
+      {pool.status === "started" ? (
+        <button type="button" onClick={complete}>Complete trip</button>
       ) : null}
       {error ? <p>{error}</p> : null}
     </section>
