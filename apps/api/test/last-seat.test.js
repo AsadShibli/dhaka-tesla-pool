@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import test from "node:test";
 
 // Two accepts race for one free seat. The SQL update keeps seats_taken within capacity.
-const base = process.env.API_URL || "http://localhost:4011";
+const base = process.env.API_URL || "http://localhost:4000";
 const apiUp = await fetch(`${base}/health`).then((response) => response.ok).catch(() => false);
 const jars = {};
 
