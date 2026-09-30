@@ -17,7 +17,9 @@ export function DriverDashboard() {
   const { byCode, nameOf } = useAreas();
   const vehicle = usePoll("/vehicles/online", 5000);
   const pool = usePoll("/pools/open", 3000);
-  const waiting = usePoll("/rides/waiting", 3000);
+  const online = vehicle.data?.isOnline === true;
+  // Offline Bullet takes no riders, so it does not ask who is waiting.
+  const waiting = usePoll(online ? "/rides/waiting" : null, 3000);
   const history = usePoll("/rides/history", 10000);
 
   const trips = (history.data ?? []).filter((trip) => trip.status === "completed");
@@ -37,7 +39,7 @@ export function DriverDashboard() {
         <StatCard icon={Icon.Power} tone={vehicle.data?.isOnline ? "green" : "dark"}
           value={vehicle.loading ? "…" : vehicle.data?.isOnline ? "Online" : "Offline"} label={`${vehicle.data?.name ?? "Tesla"} status`} />
         <StatCard icon={Icon.Seat} tone="blue" value={open ? `${open.seatsTaken}/${open.capacity}` : `0/${vehicle.data?.capacity ?? 3}`} label="Seats taken" />
-        <StatCard icon={Icon.Users} tone="orange" value={waiting.loading ? "…" : (waiting.data ?? []).length} label="Waiting requests" />
+        <StatCard icon={Icon.Users} tone="orange" value={!online ? "–" : waiting.loading ? "…" : (waiting.data ?? []).length} label={online ? "Waiting requests" : "Go online to see requests"} />
         <StatCard icon={Icon.Cash} tone="teal" value={taka(earned)} label={`Earned in ${trips.length} trip${trips.length === 1 ? "" : "s"}`} />
       </div>
 
@@ -54,6 +56,7 @@ export function DriverDashboard() {
         loading={waiting.loading}
         error={waiting.error}
         vehicle={vehicle.data}
+        vehicleLoading={vehicle.loading}
         pool={open}
         byCode={byCode}
         nameOf={nameOf}

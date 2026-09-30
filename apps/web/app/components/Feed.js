@@ -18,11 +18,16 @@ const LOOK = {
 };
 
 function describe(event, nameOf) {
+  if (event.coRider) {
+    return event.toStatus === "matched"
+      ? { title: "A rider joined your Tesla", detail: "Shared ride, 15% off your fare" }
+      : { title: "A rider left your Tesla", detail: "Seats and fare updated" };
+  }
   const trip = event.pickupCode ? `${nameOf(event.pickupCode)} → ${nameOf(event.destinationCode)}` : "Bullet's trip";
   const who = event.passengerName ? `${event.passengerName}: ` : "";
   switch (event.toStatus) {
     case "requested": return { title: `${who}Ride requested`, detail: trip };
-    case "matched": return { title: `${who}Matched in Bullet`, detail: event.note ?? trip };
+    case "matched": return { title: event.actorName ? `${event.actorName} accepted your ride` : `${who}Matched in Bullet`, detail: event.note ?? trip };
     case "driver_arrived": return { title: "Driver arrived at pickup", detail: trip };
     case "started": return { title: "Trip started", detail: trip };
     case "completed": return { title: "Trip completed", detail: trip };
