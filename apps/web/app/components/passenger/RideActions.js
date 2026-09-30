@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Icon } from "../Icons";
 import { api, announceChange, errorText } from "../../lib/api";
 
-// Cancel is allowed until the trip starts. Payment only after it completes, and only once.
+// Cancel is allowed until the trip starts. Payment once dropped off, and only once; the driver completes the trip after everyone pays.
 const CANCELLABLE = new Set(["requested", "matched", "driver_arrived"]);
 
 export function RideActions({ ride, onError }) {
@@ -35,7 +35,7 @@ export function RideActions({ ride, onError }) {
     );
   }
 
-  if (ride.status === "completed" && !ride.paidMethod) {
+  if (ride.status === "dropped_off" && !ride.paidMethod) {
     return (
       <div className="row-actions">
         <button type="button" className="btn btn-primary btn-sm" disabled={busy !== ""}
