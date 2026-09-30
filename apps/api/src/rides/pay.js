@@ -8,7 +8,8 @@ import { wallets } from "../db/schema/wallets.js";
 
 const methods = new Set(["cash", "teslapay"]);
 
-// Records one fare after the trip is completed. TeslaPay debits that wallet.
+// Records one fare once the rider is dropped off. TeslaPay debits that wallet.
+// The driver can complete the trip only after every rider has paid.
 export function registerPay(app) {
   app.post("/rides/:id/pay", requireUser, async (req, res, next) => {
     try {
@@ -28,7 +29,7 @@ async function payRide(passengerId, rideId, method) {
     const [ride] = await tx.select().from(rideRequests).where(eq(rideRequests.id, rideId)).for("update");
     if (!ride) fail(404, "ride not found");
     if (ride.passengerId !== passengerId) fail(403, "you can only pay your own ride");
-    if (ride.status !== "completed") fail(409, "ride is not completed");
+    if (ride.status !== "dropped_off") fail(409, "pay after you are dropped off");
     if (!ride.farePoisha) fail(409, "ride has no fare");
 
     if (method === "teslapay") {
@@ -50,12 +51,12 @@ async function payRide(passengerId, rideId, method) {
       amountPoisha: payments.amountPoisha,
       method: payments.method,
     });
-    // Status stays completed. The event records who paid, how, and how much.
+    // Status stays dropped_off until the driver completes the trip. The event records who paid, how, and how much.
     await tx.insert(rideEvents).values({
       actorUserId: passengerId,
       poolId: ride.poolId,
       rideRequestId: ride.id,
-      fromStatus: "completed",
+      fromStatus: "dropped_off",
       toStatus: "paid",
       note: `${ride.farePoisha} poisha by ${method}`,
     });
