@@ -1,4 +1,5 @@
 import express from "express";
+import { registerAreas } from "./areas/list.js";
 import { registerAccount } from "./auth/account.js";
 import { registerLogin } from "./auth/login.js";
 import { registerSignup } from "./auth/signup.js";
@@ -29,6 +30,7 @@ app.use((req, res, next) => {
   });
   next();
 });
+registerAreas(app);
 registerSignup(app);
 registerLogin(app);
 registerAccount(app);
