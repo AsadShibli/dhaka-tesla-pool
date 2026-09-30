@@ -5,13 +5,17 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
+COPY packages/domain/package.json packages/domain/package.json
 RUN npm ci --workspace web
 
+# The site imports the fare and match rules from packages/domain.
+COPY packages/domain packages/domain
 COPY apps/web apps/web
 
-# Read while Next compiles the server page. `api` is the Compose service name.
-ENV API_URL=http://api:4000
 RUN npm run build --workspace web
 
+ENV NODE_ENV=production
+# Read at request time by the /api routes. `api` is the Compose service name.
+ENV API_URL=http://api:4000
 EXPOSE 3000
 CMD ["npm", "run", "start", "--workspace", "web"]
