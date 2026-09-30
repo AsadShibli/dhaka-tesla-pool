@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { requireUser } from "../auth/session.js";
 import { db } from "../db/client.js";
 
-// The latest ride events this person is part of. Feeds the activity list on the dashboard.
+// The latest ride events this person is part of. Feeds the activity list and the pop-up notifications.
 export function registerEvents(app) {
   app.get("/events/mine", requireUser, async (req, res, next) => {
     try {
@@ -16,17 +16,23 @@ export function registerEvents(app) {
   });
 }
 
-// Events on this passenger's own requests, plus trip-wide steps (arrive, start, complete)
-// of a pool they are still in. Another rider's accept or payment is not included.
+// Events on this passenger's own requests, trip-wide steps (arrive, start, complete) of a pool
+// they are still in, and another rider joining or leaving that pool. A co-rider event is marked
+// coRider and carries no name or route of theirs: only that the car and this fare changed.
 function passengerEvents(passengerId) {
   return db.execute(sql`
     SELECT e.id, e.from_status AS "fromStatus", e.to_status AS "toStatus", e.note,
            to_char(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt",
-           r.pickup_code AS "pickupCode", r.destination_code AS "destinationCode"
+           e.actor_user_id AS "actorUserId", a.name AS "actorName",
+           r.pickup_code AS "pickupCode", r.destination_code AS "destinationCode",
+           r.fare_poisha AS "farePoisha",
+           (e.ride_request_id IS NOT NULL AND e.ride_request_id <> r.id) AS "coRider"
     FROM ride_events e
     JOIN ride_requests r
       ON e.ride_request_id = r.id
-      OR (e.ride_request_id IS NULL AND e.pool_id = r.pool_id AND r.status <> 'cancelled')
+      OR (e.pool_id = r.pool_id AND r.status <> 'cancelled'
+          AND (e.ride_request_id IS NULL OR e.to_status IN ('matched', 'cancelled')))
+    JOIN users a ON a.id = e.actor_user_id
     WHERE r.passenger_id = ${passengerId}
     ORDER BY e.created_at DESC
     LIMIT 20
@@ -38,6 +44,7 @@ function driverEvents(driverId) {
   return db.execute(sql`
     SELECT e.id, e.from_status AS "fromStatus", e.to_status AS "toStatus", e.note,
            to_char(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt",
+           e.actor_user_id AS "actorUserId",
            r.pickup_code AS "pickupCode", r.destination_code AS "destinationCode",
            u.name AS "passengerName"
     FROM ride_events e

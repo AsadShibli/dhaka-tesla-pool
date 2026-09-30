@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Icon } from "../Icons";
+import { useToast } from "../Toaster";
 import { Card, Loading, Notice } from "../ui";
 import { api, announceChange, errorText } from "../../lib/api";
 
@@ -9,6 +10,7 @@ import { api, announceChange, errorText } from "../../lib/api";
 export function OnlineSwitch({ vehicle, loading, error: loadError, reload }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const notify = useToast();
 
   async function flip() {
     setBusy(true);
@@ -21,6 +23,18 @@ export function OnlineSwitch({ vehicle, loading, error: loadError, reload }) {
     }
     reload();
     announceChange();
+    if (!result.body.isOnline) {
+      notify({ tone: "dark", icon: "Power", title: "You're offline", detail: "New requests are hidden. A trip on the road can still be finished." });
+      return;
+    }
+    const waiting = await api("/rides/waiting");
+    const count = waiting.ok ? waiting.body.length : 0;
+    notify({
+      tone: "green",
+      icon: "Power",
+      title: "You're online",
+      detail: count ? `${count} rider${count === 1 ? " is" : "s are"} waiting. Accept the ones that fit.` : "No one is waiting yet. New requests will pop up here.",
+    });
   }
 
   return (
