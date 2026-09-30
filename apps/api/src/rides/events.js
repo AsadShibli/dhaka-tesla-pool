@@ -25,7 +25,7 @@ function passengerEvents(passengerId) {
            to_char(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt",
            e.actor_user_id AS "actorUserId", a.name AS "actorName",
            r.pickup_code AS "pickupCode", r.destination_code AS "destinationCode",
-           r.fare_poisha AS "farePoisha",
+           r.fare_poisha AS "farePoisha", pm.method AS "paidMethod",
            (e.ride_request_id IS NOT NULL AND e.ride_request_id <> r.id) AS "coRider"
     FROM ride_events e
     JOIN ride_requests r
@@ -33,6 +33,7 @@ function passengerEvents(passengerId) {
       OR (e.pool_id = r.pool_id AND r.status <> 'cancelled'
           AND (e.ride_request_id IS NULL OR e.to_status IN ('matched', 'cancelled')))
     JOIN users a ON a.id = e.actor_user_id
+    LEFT JOIN payments pm ON pm.ride_request_id = r.id
     WHERE r.passenger_id = ${passengerId}
     ORDER BY e.created_at DESC
     LIMIT 20
