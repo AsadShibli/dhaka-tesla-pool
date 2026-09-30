@@ -1,7 +1,10 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { requireUser } from "../auth/session.js";
 import { db } from "../db/client.js";
+import { poolMembers } from "../db/schema/poolMembers.js";
 import { pools } from "../db/schema/pools.js";
+import { rideRequests } from "../db/schema/rideRequests.js";
+import { users } from "../db/schema/users.js";
 
 const live = ["accepted", "driver_arrived", "started"];
 
@@ -21,7 +24,20 @@ export function registerOpenPool(app) {
         eq(pools.driverId, req.user.id),
         inArray(pools.status, live),
       ));
-      res.json(pool ?? null);
+      // No trip yet. null tells the page to show "No open trip".
+      if (!pool) return res.json(null);
+      // Names and stops, so Jashim can see who is actually in Bullet.
+      const riders = await db.select({
+        name: users.name,
+        pickupCode: rideRequests.pickupCode,
+        destinationCode: rideRequests.destinationCode,
+        seats: poolMembers.seats,
+        farePoisha: poolMembers.farePoisha,
+      }).from(poolMembers)
+        .innerJoin(users, eq(users.id, poolMembers.passengerId))
+        .innerJoin(rideRequests, eq(rideRequests.id, poolMembers.rideRequestId))
+        .where(eq(poolMembers.poolId, pool.id));
+      res.json({ ...pool, riders });
     } catch (err) {
       next(err);
     }

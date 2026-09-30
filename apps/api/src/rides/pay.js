@@ -2,6 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { requireUser } from "../auth/session.js";
 import { db } from "../db/client.js";
 import { payments } from "../db/schema/payments.js";
+import { rideEvents } from "../db/schema/rideEvents.js";
 import { rideRequests } from "../db/schema/rideRequests.js";
 import { wallets } from "../db/schema/wallets.js";
 
@@ -48,6 +49,15 @@ async function payRide(passengerId, rideId, method) {
       rideRequestId: payments.rideRequestId,
       amountPoisha: payments.amountPoisha,
       method: payments.method,
+    });
+    // Status stays completed. The event records who paid, how, and how much.
+    await tx.insert(rideEvents).values({
+      actorUserId: passengerId,
+      poolId: ride.poolId,
+      rideRequestId: ride.id,
+      fromStatus: "completed",
+      toStatus: "paid",
+      note: `${ride.farePoisha} poisha by ${method}`,
     });
     return payment;
   });

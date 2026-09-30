@@ -1,0 +1,12 @@
+%% A passenger's ride request. The pool (Bullet's trip) moves accepted -> driver_arrived -> started -> completed.
+stateDiagram-v2
+  [*] --> requested: passenger books
+  requested --> matched: driver accepts (joins or opens a pool)
+  matched --> driver_arrived: driver marks arrival
+  driver_arrived --> started: driver starts
+  started --> completed: driver completes
+  requested --> cancelled: passenger cancels
+  matched --> cancelled: passenger cancels, seat returned
+  driver_arrived --> cancelled: passenger cancels, seat returned
+  completed --> [*]: paid by cash or TeslaPay (event "paid")
+  cancelled --> [*]

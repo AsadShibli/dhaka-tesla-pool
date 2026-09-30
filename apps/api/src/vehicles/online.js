@@ -13,6 +13,7 @@ export function registerOnline(app) {
       const [vehicle] = await db.select({
         name: vehicles.name,
         isOnline: vehicles.isOnline,
+        capacity: vehicles.capacity,
       }).from(vehicles).where(eq(vehicles.driverId, req.user.id));
       if (!vehicle) return res.status(404).json({ error: "driver has no tesla" });
       res.json(vehicle);
@@ -40,7 +41,7 @@ export function registerOnline(app) {
 async function setOnline(driverId, online) {
   const [vehicle] = await db.update(vehicles).set({ isOnline: online }).where(
     eq(vehicles.driverId, driverId),
-  ).returning({ name: vehicles.name, isOnline: vehicles.isOnline });
+  ).returning({ name: vehicles.name, isOnline: vehicles.isOnline, capacity: vehicles.capacity });
   if (!vehicle) fail(404, "driver has no tesla");
   return vehicle;
 }

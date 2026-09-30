@@ -4,6 +4,7 @@ import { db } from "../db/client.js";
 import { areas } from "../db/schema/areas.js";
 import { poolMembers } from "../db/schema/poolMembers.js";
 import { pools } from "../db/schema/pools.js";
+import { rideEvents } from "../db/schema/rideEvents.js";
 import { rideRequests } from "../db/schema/rideRequests.js";
 import { vehicles } from "../db/schema/vehicles.js";
 import { distanceMeters } from "../../../../packages/domain/distance.js";
@@ -86,6 +87,14 @@ async function acceptRide(driverId, rideId) {
       farePoisha,
     }).where(eq(rideRequests.id, ride.id));
     if (pooled) await discountMembers(tx, members, point);
+    await tx.insert(rideEvents).values({
+      actorUserId: driverId,
+      poolId: pool.id,
+      rideRequestId: ride.id,
+      fromStatus: "requested",
+      toStatus: "matched",
+      note: `${pool.seatsTaken} of ${pool.capacity} seats taken`,
+    });
 
     return { poolId: pool.id, seatsTaken: pool.seatsTaken, capacity: pool.capacity, farePoisha };
   });

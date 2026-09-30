@@ -1,10 +1,10 @@
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { requireUser } from "../auth/session.js";
 import { db } from "../db/client.js";
 import { rideRequests } from "../db/schema/rideRequests.js";
 import { users } from "../db/schema/users.js";
 
-// Every ride still waiting. Accept decides which of these can share the open Tesla.
+// Every ride still waiting, oldest first so the first request is offered first. Accept decides which of these can share the open Tesla.
 export function registerWaiting(app) {
   app.get("/rides/waiting", requireUser, async (req, res, next) => {
     try {
@@ -20,7 +20,7 @@ export function registerWaiting(app) {
         farePoisha: rideRequests.farePoisha,
       }).from(rideRequests).innerJoin(users, eq(users.id, rideRequests.passengerId)).where(
         eq(rideRequests.status, "requested"),
-      );
+      ).orderBy(asc(rideRequests.createdAt));
       res.json(rides);
     } catch (err) {
       next(err);
