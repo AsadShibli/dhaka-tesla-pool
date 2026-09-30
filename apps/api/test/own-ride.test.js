@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import test from "node:test";
 
 // A passenger sees and cancels only their own request.
-const base = process.env.API_URL || "http://localhost:4011";
+const base = process.env.API_URL || "http://localhost:4000";
 const apiUp = await fetch(`${base}/health`).then((response) => response.ok).catch(() => false);
 const jars = {};
 
@@ -45,6 +45,6 @@ test("one passenger cannot open another's ride", { skip: apiUp ? false : "API is
   } finally {
     if (!rideId) return;
     execFileSync("docker", ["exec", "tesla-project-db-1", "psql", "-U", "tesla", "-d", "tesla_pool", "-c",
-      `DELETE FROM ride_requests WHERE id='${rideId}';`], { stdio: "ignore" });
+      `DELETE FROM ride_events WHERE ride_request_id='${rideId}'; DELETE FROM ride_requests WHERE id='${rideId}';`], { stdio: "ignore" });
   }
 });

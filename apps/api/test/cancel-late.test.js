@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import test from "node:test";
 
 // Once the trip has started, the seat stays taken.
-const base = process.env.API_URL || "http://localhost:4011";
+const base = process.env.API_URL || "http://localhost:4000";
 const apiUp = await fetch(`${base}/health`).then((response) => response.ok).catch(() => false);
 const jars = {};
 
@@ -55,7 +55,7 @@ test("a passenger cannot cancel after the trip starts", { skip: apiUp ? false : 
     const list = ids.map((id) => `'${id}'`).join(",");
     const sql = poolId
       ? `DELETE FROM ride_events WHERE pool_id='${poolId}' OR ride_request_id IN (${list}); DELETE FROM pool_members WHERE pool_id='${poolId}'; DELETE FROM ride_requests WHERE id IN (${list}); DELETE FROM pools WHERE id='${poolId}';`
-      : `DELETE FROM ride_requests WHERE id IN (${list});`;
+      : `DELETE FROM ride_events WHERE ride_request_id IN (${list}); DELETE FROM ride_requests WHERE id IN (${list});`;
     execFileSync("docker", ["exec", "tesla-project-db-1", "psql", "-U", "tesla", "-d", "tesla_pool", "-c", sql], { stdio: "ignore" });
   }
 });

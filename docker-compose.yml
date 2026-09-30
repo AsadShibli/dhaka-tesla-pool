@@ -1,15 +1,19 @@
-# Local demo stack. Values match .env.example.
+# Local demo stack: Postgres, the Express API, and the Next.js site.
+# Values come from .env when present, otherwise the defaults below (same as .env.example).
 services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: tesla
-      POSTGRES_PASSWORD: tesla
-      POSTGRES_DB: tesla_pool
+      POSTGRES_USER: ${POSTGRES_USER:-tesla}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tesla}
+      POSTGRES_DB: ${POSTGRES_DB:-tesla_pool}
     ports:
-      - "5432:5432"
+      # 5433 on the host, so a Postgres already installed on 5432 does not answer instead.
+      - "${DB_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tesla -d tesla_pool"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -20,8 +24,12 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       API_PORT: 4000
+      # Signs the login cookie. Set a long random value outside a local demo.
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me}
       # `db` is the Postgres service name on the compose network.
-      DATABASE_URL: postgres://tesla:tesla@db:5432/tesla_pool
+      # true skips the Jashim / Nusrat / Rafiq / Shirin cast on a new database.
+      SKIP_SEED: ${SKIP_SEED:-false}
+      DATABASE_URL: postgres://${POSTGRES_USER:-tesla}:${POSTGRES_PASSWORD:-tesla}@db:5432/${POSTGRES_DB:-tesla_pool}
     ports:
       - "4000:4000"
     depends_on:
@@ -31,7 +39,8 @@ services:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 20
+    restart: unless-stopped
 
   web:
     build:
@@ -44,3 +53,12 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata:
