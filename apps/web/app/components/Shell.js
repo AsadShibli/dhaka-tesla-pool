@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon } from "./Icons";
+import { Notifier } from "./Notifier";
 import { useSession } from "./Session";
 import { usePoll } from "../lib/usePoll";
 import { initials, taka } from "../lib/format";
@@ -116,6 +117,7 @@ export function Shell({ children }) {
         </header>
         <main className="content">{children}</main>
       </div>
+      <Notifier />
     </div>
   );
 }
