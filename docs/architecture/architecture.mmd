@@ -1,0 +1,8 @@
+%% Request path for every screen. The browser never calls Express directly.
+flowchart LR
+  B["Browser<br/>passenger or driver"] -->|"HTTPS, httpOnly token cookie"| W["Next.js 15 app<br/>apps/web<br/>pages + /api route handlers"]
+  W -->|"HTTP + forwarded cookie<br/>API_URL"| A["Express API<br/>apps/api<br/>auth, rides, pools, payments"]
+  A -->|"SQL over pg pool<br/>Drizzle ORM"| D[("PostgreSQL 16<br/>tables, constraints,<br/>row locks")]
+  A -. "imports" .-> R["packages/domain<br/>distance, fare, match"]
+  W -. "imports" .-> R
+  M["migrate.js<br/>runs before the API listens"] --> D
