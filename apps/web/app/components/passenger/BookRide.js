@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon } from "../Icons";
-import { FareChart } from "../FareChart";
 import { Card, Loading, Notice } from "../ui";
 import { api, announceChange, errorText } from "../../lib/api";
 import { kilometers, taka } from "../../lib/format";
@@ -134,12 +133,6 @@ export function BookRide() {
           </ul>
         </Card>
       </div>
-
-      {areas.length ? (
-        <Card title="Fares from here" subtitle={`Solo and shared fare from ${nameOf(pickup)} to every area`}>
-          <FareChart areas={areas} byCode={byCode} pickupCode={pickup} destinationCode={destination} />
-        </Card>
-      ) : null}
     </>
   );
 }

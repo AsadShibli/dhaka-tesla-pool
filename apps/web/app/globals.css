@@ -253,14 +253,6 @@ tbody tr:hover { background: #f8fafc; }
 }
 .seat.taken { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
 
-/* ---------- Chart ---------- */
-.chart svg { width: 100%; height: auto; display: block; }
-.chart .grid-line { stroke: #e9ecef; stroke-dasharray: 3 4; }
-.chart .axis { font-size: 11px; fill: var(--muted); }
-.legend { display: flex; justify-content: center; gap: 18px; font-size: 0.85rem; margin-top: 8px; }
-.legend span { display: inline-flex; align-items: center; gap: 6px; }
-.legend i { width: 10px; height: 10px; border-radius: 50%; }
-
 /* ---------- Empty, loading ---------- */
 .empty { text-align: center; padding: 34px 16px; color: var(--muted); }
 .empty svg { width: 36px; height: 36px; color: var(--subtle); margin-bottom: 10px; }
