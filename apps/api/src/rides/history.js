@@ -1,6 +1,7 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { requireUser } from "../auth/session.js";
 import { db } from "../db/client.js";
+import { payments } from "../db/schema/payments.js";
 import { pools } from "../db/schema/pools.js";
 import { rideRequests } from "../db/schema/rideRequests.js";
 
@@ -29,7 +30,9 @@ function ridesOf(passengerId) {
     pickupCode: rideRequests.pickupCode,
     destinationCode: rideRequests.destinationCode,
     farePoisha: rideRequests.farePoisha,
-  }).from(rideRequests).where(and(
+    createdAt: rideRequests.createdAt,
+    paidMethod: payments.method,
+  }).from(rideRequests).leftJoin(payments, eq(payments.rideRequestId, rideRequests.id)).where(and(
     eq(rideRequests.passengerId, passengerId),
     inArray(rideRequests.status, finished),
   )).orderBy(desc(rideRequests.createdAt));
@@ -42,6 +45,10 @@ function poolsOf(driverId) {
     status: pools.status,
     seatsTaken: pools.seatsTaken,
     capacity: pools.capacity,
+    createdAt: pools.createdAt,
+    // Riders still in the pool at the end, and what they owe in total.
+    riders: sql`(SELECT count(*)::int FROM pool_members pm WHERE pm.pool_id = ${pools.id})`,
+    fareTotalPoisha: sql`(SELECT coalesce(sum(pm.fare_poisha), 0)::int FROM pool_members pm WHERE pm.pool_id = ${pools.id})`,
   }).from(pools).where(and(
     eq(pools.driverId, driverId),
     inArray(pools.status, finished),
