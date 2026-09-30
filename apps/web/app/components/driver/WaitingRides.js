@@ -9,7 +9,6 @@ import { dropGapMeters, sharesWith } from "../../lib/quote";
 
 // Why a ride can or cannot join Bullet right now. The API checks the same rules again on accept.
 function fitFor(ride, { vehicle, pool, byCode }) {
-  if (!vehicle?.isOnline) return { ok: false, text: "Go online first" };
   if (!pool) return { ok: ride.seats <= (vehicle.capacity ?? 3), text: "Starts a new trip" };
   if (pool.status !== "accepted") return { ok: false, text: "Finish the current trip first" };
   const free = pool.capacity - pool.seatsTaken;
@@ -24,7 +23,7 @@ function fitFor(ride, { vehicle, pool, byCode }) {
   return { ok: true, pooled: true, text: near ? `Shares with ${near.name} · ${kilometers(dropGapMeters(byCode, ride, near))} apart` : "Fits" };
 }
 
-export function WaitingRides({ rides, loading, error: loadError, vehicle, pool, byCode, nameOf }) {
+export function WaitingRides({ rides, loading, error: loadError, vehicle, vehicleLoading, pool, byCode, nameOf }) {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
 
@@ -42,7 +41,9 @@ export function WaitingRides({ rides, loading, error: loadError, vehicle, pool, 
   return (
     <Card title="Waiting rides" subtitle="Requests nobody has accepted yet. Shared riders need the same pickup and drop-offs within 2 km.">
       <Notice>{loadError || error}</Notice>
-      {loading ? <Loading rows={3} /> : !rides?.length ? (
+      {vehicleLoading ? <Loading rows={3} /> : !vehicle?.isOnline ? (
+        <Empty icon={Icon.Power} title="You're offline">Go online to see who is waiting. New requests will pop up as they arrive.</Empty>
+      ) : loading ? <Loading rows={3} /> : !rides?.length ? (
         <Empty icon={Icon.Users} title="No one is waiting">New requests from Nusrat, Rafiq, or Shirin appear here within a few seconds.</Empty>
       ) : (
         <div className="table-wrap">
