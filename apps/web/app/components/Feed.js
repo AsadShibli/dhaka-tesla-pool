@@ -12,6 +12,7 @@ const LOOK = {
   matched: { icon: Icon.Users, color: "bg-sky" },
   driver_arrived: { icon: Icon.Pin, color: "bg-purple" },
   started: { icon: Icon.Bolt, color: "bg-teal" },
+  dropped_off: { icon: Icon.Pin, color: "bg-orange" },
   completed: { icon: Icon.Flag, color: "bg-dark" },
   cancelled: { icon: Icon.X, color: "bg-red" },
   paid: { icon: Icon.Cash, color: "bg-orange" },
@@ -30,10 +31,13 @@ function describe(event, nameOf) {
     case "matched": return { title: event.actorName ? `${event.actorName} accepted your ride` : `${who}Matched in Bullet`, detail: event.note ?? trip };
     case "driver_arrived": return { title: "Driver arrived at pickup", detail: trip };
     case "started": return { title: "Trip started", detail: trip };
-    case "completed": return { title: "Trip completed", detail: trip };
+    case "dropped_off": return { title: "Dropped off, awaiting payment", detail: trip };
+    case "completed": return { title: "Trip completed", detail: event.pickupCode ? trip : "Every fare collected" };
     case "cancelled": return { title: `${who}Ride cancelled`, detail: trip };
     case "paid": {
-      const [amount, , method] = (event.note ?? "").split(" ");
+      // The note reads "7437 poisha by teslapay".
+      const words = (event.note ?? "").split(" ");
+      const [amount, method] = [words[0], words.at(-1)];
       return { title: `${who}Fare paid`, detail: amount ? `${taka(Number(amount))} by ${method === "teslapay" ? "TeslaPay" : "cash"}` : trip };
     }
     default: return { title: event.toStatus, detail: trip };

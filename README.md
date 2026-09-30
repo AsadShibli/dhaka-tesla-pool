@@ -41,7 +41,7 @@ At 8:41 on Banani Road 11, Nusrat books a ride to Mohakhali. Two minutes later R
 Three actors:
 
 - **Passenger** (Nusrat, Rafiq, Shirin): sign up or in, request a ride, see the estimate, track status, cancel while allowed, pay, see history.
-- **Driver / Tesla** (Jashim, Bullet, 3 seats): sign in, go online or offline, see waiting requests, accept, mark arrival, start, complete, see riders and past trips.
+- **Driver / Tesla** (Jashim, Bullet, 3 seats): sign in, go online or offline, see waiting requests while online, accept, mark arrival, start, drop riders off, complete once every fare is paid, see riders and past trips.
 - **Pool / ride**: several requests can share one Tesla. Seats never exceed capacity. Each rider has an individual fare. Every step is written to an append-only event log.
 
 ## Features
@@ -51,9 +51,10 @@ Three actors:
 | Accounts | Passenger sign-up (with an empty TeslaPay wallet), sign-in for everyone, httpOnly JWT cookie, sign-out, session survives refresh |
 | Booking | Pickup, destination, seats (1–3), live solo and shared estimate computed with the same code the API charges with |
 | Tracking | Current ride with a lifecycle stepper, open rides table, activity feed from `ride_events`, polling every few seconds |
-| Driver | Online switch, open trip with seat map and riders, waiting requests with a "does it fit" hint, arrive → start → complete |
+| Notifications | Side pop-ups for what someone else just did (accepted, a rider joined or left, arrived, started, dropped off, new request, cancelled, paid) and a centred "Trip completed" card when the trip closes |
+| Driver | Online switch (waiting requests are hidden while offline), open trip with seat map, riders, and who has paid, waiting requests with a "does it fit" hint, arrive → start → drop off → complete |
 | Pooling | Same pickup and drop-offs within 2 km; capacity enforced in one transaction; fares re-priced when a rider joins or leaves |
-| Payment | Cash, or TeslaPay debit that fails cleanly on low balance; one payment per ride |
+| Payment | Each rider pays once dropped off, by cash or a TeslaPay debit that fails cleanly on low balance; the trip cannot complete until everyone has paid |
 | History | Passenger: finished rides with payment. Driver: finished pools with riders and fares collected |
 | Ops | `docker compose up` migrates, seeds the cast, and health-checks all three containers |
 
@@ -88,7 +89,7 @@ Source: [docs/architecture/architecture.mmd](docs/architecture/architecture.mmd)
 
 ![ERD](docs/erd/erd.svg)
 
-Source: [docs/erd/erd.mmd](docs/erd/erd.mmd). Migrations are plain SQL in [apps/api/src/db/migrations](apps/api/src/db/migrations), one table per file.
+Source: [docs/erd/erd.mmd](docs/erd/erd.mmd). Migrations are plain SQL in [apps/api/src/db/migrations](apps/api/src/db/migrations), one table per file (0001–0010), then 0011–0012 add the `dropped_off` status.
 
 | Table | Why it exists | Key constraints |
 | --- | --- | --- |
@@ -113,19 +114,21 @@ stateDiagram-v2
   requested --> matched: driver accepts
   matched --> driver_arrived: driver marks arrival
   driver_arrived --> started: driver starts
-  started --> completed: driver completes
+  started --> dropped_off: driver drops riders off
+  dropped_off --> completed: driver completes, once every rider has paid
   requested --> cancelled: passenger cancels
   matched --> cancelled: passenger cancels
   driver_arrived --> cancelled: passenger cancels
-  completed --> [*]: paid (cash or TeslaPay)
+  completed --> [*]
   cancelled --> [*]
 ```
 
-- A **request** moves `requested → matched → driver_arrived → started → completed`, or to `cancelled` before `started`.
-- A **pool** is Bullet's trip: `accepted → driver_arrived → started → completed` (or `cancelled` when its last rider leaves). The driver moves the pool; every member request moves with it in the same transaction.
+- A **request** moves `requested → matched → driver_arrived → started → dropped_off → completed`, or to `cancelled` before `started`.
+- A **pool** is Bullet's trip: `accepted → driver_arrived → started → dropped_off → completed` (or `cancelled` when its last rider leaves). The driver moves the pool; every member request moves with it in the same transaction.
 - Why two state machines: the driver acts on the car's trip, the passenger acts on their own request. Keeping them separate means Rafiq can cancel without touching Nusrat's row.
 - Any other jump returns **409**, for example completing before starting, or cancelling after the trip started. New riders can join only while the pool is `accepted`; once Jashim is at the pickup, the seats are locked.
-- Paying is recorded as an event (`to_status = 'paid'`) rather than a new status, because the ride itself is finished; payment is a separate fact about it.
+- **Pay before complete.** At `dropped_off` each rider pays their own fare. `/pools/:id/complete` answers `409 waiting for payment from Rafiq` until every member has a payment row, so a trip is never closed with money still owed. A Tesla in `dropped_off` still counts as busy (the one-live-pool index includes it).
+- Paying is recorded as a `payments` row plus an event (`to_status = 'paid'`) rather than a status of its own; the request stays `dropped_off` until the driver completes the whole trip.
 
 ## Matching and fares
 
@@ -189,10 +192,10 @@ The test [last-seat.test.js](apps/api/test/last-seat.test.js) fires both accepts
 apps/
   api/                      Express API
     src/auth/               signup, login, session cookie, /me
-    src/rides/              request, accept, arrive, start, complete, cancel, pay, history, events
+    src/rides/              request, accept, arrive, start, drop-off, pay, complete, cancel, history, events
     src/vehicles/           online / offline
     src/areas/              area list
-    src/db/migrations/      0001..0010 SQL, one table each
+    src/db/migrations/      0001..0012 SQL, one change each
     src/db/seed/cast.sql    Jashim, Bullet, Nusrat, Rafiq, Shirin
     src/db/migrate.js       applies migrations + seed once
     test/                   API tests (need the stack running)
@@ -264,7 +267,7 @@ Every password is `pool-demo`. The sign-in page has one-click buttons for the ca
 | Rafiq | rafiq@dhaka-tesla.local | passenger, Banani → Gulshan 1 |
 | Shirin | shirin@dhaka-tesla.local | passenger, wants the last seat |
 
-**Try the story:** sign in as Nusrat and book Banani → Mohakhali. In a private window, sign in as Rafiq and book Banani → Gulshan 1, then Shirin and book Banani → Dhanmondi. As Jashim: go online, accept Nusrat, accept Rafiq (both fares drop), try Shirin (refused: too far), then arrive, start, complete. Back as Nusrat, pay with TeslaPay and watch the wallet drop by ৳74.37.
+**Try the story:** sign in as Nusrat and book Banani → Mohakhali. In a private window, sign in as Rafiq and book Banani → Gulshan 1, then Shirin and book Banani → Dhanmondi. As Jashim: go online (a pop-up says how many riders are waiting), accept Nusrat, accept Rafiq (both fares drop, and Nusrat is told a rider joined), try Shirin (refused: too far), then arrive, start, drop off. Complete stays locked. As Nusrat, pay with TeslaPay (the wallet drops by ৳74.37); as Rafiq, pay cash. Now Jashim can complete, and everyone gets the "Trip completed" card.
 
 ## Tests
 
@@ -284,6 +287,8 @@ Unit tests run anywhere; API tests are skipped if the API is not reachable (`API
 | The 2 km sharing rule, including a different pickup | [match.test.js](packages/domain/match.test.js) |
 | A user cannot see or change another user's ride | [own-ride.test.js](apps/api/test/own-ride.test.js), [pool-share.test.js](apps/api/test/pool-share.test.js) |
 | Cancellation rules: not after start; seats and solo fare come back | [cancel-late.test.js](apps/api/test/cancel-late.test.js), [pool-share.test.js](apps/api/test/pool-share.test.js) |
+| No paying before drop-off; no completing until every rider has paid | [pay-before-complete.test.js](apps/api/test/pay-before-complete.test.js) |
+| An offline Tesla is not shown waiting rides | [waiting-offline.test.js](apps/api/test/waiting-offline.test.js) |
 
 ## API overview
 
@@ -301,14 +306,15 @@ All bodies are JSON. Errors are `{ "error": "…" }` with 400 (bad input), 401 (
 | GET | `/rides/mine` | passenger | own requests with pool size and payment |
 | GET | `/rides/history` | both | finished rides (passenger) or pools (driver) |
 | POST | `/rides/:id/cancel` | owner | before `started`; returns seats to the pool |
-| POST | `/rides/:id/pay` | owner | `{ method: "cash" \| "teslapay" }`, once, after completion |
-| GET | `/rides/waiting` | driver | all `requested` rides, oldest first |
+| POST | `/rides/:id/pay` | owner | `{ method: "cash" \| "teslapay" }`, once, after drop-off |
+| GET | `/rides/waiting` | driver | all `requested` rides, oldest first; 409 while the Tesla is offline |
 | GET | `/rides/:id/matches` | driver | other waiting rides that could share with this one |
 | POST | `/rides/:id/accept` | driver | join the open pool or start one; checks online, fit, seats |
-| GET | `/pools/open` | driver | the live trip with riders and fares |
-| POST | `/pools/:id/arrive` · `/start` · `/complete` | driver | next step only |
+| GET | `/pools/open` | driver | the live trip with riders, fares, and who has paid |
+| POST | `/pools/:id/arrive` · `/start` · `/drop-off` | driver | next step only |
+| POST | `/pools/:id/complete` | driver | after drop-off, once every rider has paid; returns riders and fares collected |
 | GET / POST | `/vehicles/online` | driver | read or set `{ online: true \| false }` |
-| GET | `/events/mine` | both | latest ride events this person is part of |
+| GET | `/events/mine` | both | latest ride events this person is part of, including another rider joining or leaving their Tesla (without that rider's name or route); drives the feed and pop-ups |
 
 ## Deployment
 
@@ -322,7 +328,7 @@ All bodies are JSON. Errors are `{ "error": "…" }` with 400 (bad input), 401 (
 
 All three run in **Singapore**, the closest Render region to Dhaka, and deploy automatically on every push to `master`. The API runs `migrate.js` before it listens, so a new migration ships with the code. The browser only talks to the site; the site forwards `/api/*` to the API over HTTPS, so the login cookie stays on the site's own domain.
 
-Checked after deploying: the four cast logins, Jashim online, Nusrat and Rafiq pooled (৳74.37 and ৳72.25), Shirin refused as too far, arrive → start → complete, TeslaPay and cash payments, and trip history in the browser.
+Checked after deploying: the four cast logins, Jashim online, Nusrat and Rafiq pooled (৳74.37 and ৳72.25), Shirin refused as too far, arrive → start → drop off, TeslaPay and cash payments, complete, and trip history in the browser.
 
 **Free-plan limits**
 
@@ -343,7 +349,7 @@ On any machine or VM with Docker: clone, set a real `JWT_SECRET` in `.env`, `doc
 - A **request's seats** (1–3) all travel together. A pool is one pickup area, and riders join only before the driver arrives.
 - The **estimate is the solo fare**; the shared discount is applied when a second rider actually joins. That way a passenger is never quoted a discount they do not get.
 - A passenger may hold **more than one open request** (e.g. booking for a friend on a separate request). One active request per passenger would be a one-line rule if the product wants it.
-- **Payment happens after completion**, once. TeslaPay is a simulated wallet debited in the same transaction as the payment row; there is no top-up screen.
+- **Payment happens at drop-off**, once per rider, and the driver completes the trip only after everyone has paid. Cash is recorded by the passenger tapping "Cash"; a real app would have the driver confirm it. TeslaPay is a simulated wallet debited in the same transaction as the payment row; there is no top-up screen.
 - **Polling** (every 3–5 s) instead of WebSockets: enough for a demo with a handful of users.
 
 ## Trade-offs, limits, next steps
@@ -416,4 +422,4 @@ Six minutes maximum.
 
 - **0:00–1:00** The problem in my own words: Nusrat and Rafiq leave Banani two minutes apart. Bullet has three seats. Share when it makes sense, charge each fairly, never overbook.
 - **1:00–3:00** Architecture diagram and ERD. The two lifecycles (request vs pool). One decision: the capacity rule lives in the database transaction. One trade-off: polling instead of push.
-- **3:00–6:00** Product tour: Nusrat books, Rafiq books, Jashim goes online and accepts both (fares drop to ৳74.37 and ৳72.25), Shirin is refused, arrive → start → complete, Nusrat pays with TeslaPay. Edge case: two accepts for the last seat (run `last-seat.test.js`).
+- **3:00–6:00** Product tour: Nusrat books, Rafiq books, Jashim goes online and accepts both (fares drop to ৳74.37 and ৳72.25), Shirin is refused, arrive → start → drop off, Complete stays locked until Nusrat (TeslaPay) and Rafiq (cash) pay, then the "Trip completed" card. Edge case: two accepts for the last seat (run `last-seat.test.js`).

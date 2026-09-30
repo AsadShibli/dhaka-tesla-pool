@@ -36,6 +36,7 @@ export const STATUS_TEXT = {
   accepted: "Accepted",
   driver_arrived: "Driver arrived",
   started: "In progress",
+  dropped_off: "Awaiting payment",
   completed: "Completed",
   cancelled: "Cancelled",
   paid: "Paid",

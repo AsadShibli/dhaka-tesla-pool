@@ -5,7 +5,7 @@ import { vehicles } from "./vehicles.js";
 
 // A pool begins when the driver accepts. It is never just "requested".
 export const poolStatus = pgEnum("pool_status", [
-  "accepted", "driver_arrived", "started", "completed", "cancelled",
+  "accepted", "driver_arrived", "started", "dropped_off", "completed", "cancelled",
 ]);
 
 // One shared ride on a Tesla. Taken seats must stay within capacity.
