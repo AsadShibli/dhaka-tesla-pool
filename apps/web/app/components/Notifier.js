@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useSession } from "./Session";
-import { useToast } from "./Toaster";
+import { useCelebrate, useToast } from "./Toaster";
 import { taka } from "../lib/format";
 import { useAreas } from "../lib/useAreas";
 import { usePoll } from "../lib/usePoll";
@@ -19,7 +19,7 @@ function passengerToast(event, nameOf) {
     case "matched": return { tone: "blue", icon: "Car", title: `${event.actorName} accepted your ride`, detail: `${nameOf(event.pickupCode)} → ${to} · ${event.note}` };
     case "driver_arrived": return { tone: "purple", icon: "Pin", title: `${event.actorName} has arrived`, detail: `Waiting for you at ${nameOf(event.pickupCode)}.` };
     case "started": return { tone: "teal", icon: "Bolt", title: "Your trip has started", detail: `On the way to ${to}.` };
-    case "completed": return { tone: "dark", icon: "Flag", title: `You've reached ${to}`, detail: `Pay ${taka(event.farePoisha)} by cash or TeslaPay.` };
+    case "dropped_off": return { tone: "orange", icon: "Wallet", title: `You've reached ${to}`, detail: `Pay ${taka(event.farePoisha)} by TeslaPay or cash so ${event.actorName} can close the trip.` };
     default: return null;
   }
 }
@@ -29,8 +29,10 @@ function driverToast(event, nameOf) {
   switch (event.toStatus) {
     case "cancelled": return { tone: "red", icon: "X", title: `${event.passengerName} cancelled`, detail: `${route} · the seat is free again.` };
     case "paid": {
-      const [amount, , method] = (event.note ?? "").split(" ");
-      return { tone: "orange", icon: "Cash", title: `${event.passengerName} paid ${taka(Number(amount))}`, detail: method === "teslapay" ? "By TeslaPay." : "In cash." };
+      // The note reads "7437 poisha by teslapay".
+      const words = (event.note ?? "").split(" ");
+      const [amount, method] = [words[0], words.at(-1)];
+      return { tone: "green", icon: "Cash", title: `${event.passengerName} paid ${taka(Number(amount))}`, detail: method === "teslapay" ? "By TeslaPay." : "In cash." };
     }
     default: return null;
   }
@@ -58,6 +60,7 @@ function useAnnounce(items, key, reset, onNew) {
 export function Notifier() {
   const { user } = useSession();
   const notify = useToast();
+  const celebrate = useCelebrate();
   const { nameOf, byCode } = useAreas();
   const isDriver = user.role === "driver";
 
@@ -72,6 +75,18 @@ export function Notifier() {
     // The feed is newest first; announce in the order things happened.
     for (const event of [...fresh].reverse()) {
       if (event.actorUserId === user.id) continue;
+      if (!isDriver && event.toStatus === "completed" && !event.coRider) {
+        celebrate({
+          title: "Trip completed",
+          subtitle: `Thanks for riding with ${event.actorName}. See you on the next one.`,
+          rows: [
+            ["Route", `${nameOf(event.pickupCode)} → ${nameOf(event.destinationCode)}`],
+            ["Your fare", taka(event.farePoisha)],
+            ["Paid by", event.paidMethod === "teslapay" ? "TeslaPay" : "Cash"],
+          ],
+        });
+        continue;
+      }
       const toast = isDriver ? driverToast(event, nameOf) : passengerToast(event, nameOf);
       if (toast) notify(toast);
     }

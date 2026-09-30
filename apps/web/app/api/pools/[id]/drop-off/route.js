@@ -1,9 +1,9 @@
-// Forwards the signed-in cookie. Express allows this only after every rider has paid.
+// Forwards the signed-in cookie. Express allows this only while the trip is on the road.
 const API_URL = process.env.API_URL || "http://localhost:4000";
 
 export async function POST(request, { params }) {
   const { id } = await params;
-  const response = await fetch(`${API_URL}/pools/${id}/complete`, {
+  const response = await fetch(`${API_URL}/pools/${id}/drop-off`, {
     method: "POST",
     headers: { cookie: request.headers.get("cookie") ?? "" },
     cache: "no-store",

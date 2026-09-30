@@ -6,7 +6,7 @@ import { users } from "./users.js";
 
 // Passenger-visible lifecycle. pool_id stays empty until a driver accepts the request.
 export const rideStatus = pgEnum("ride_status", [
-  "requested", "matched", "driver_arrived", "started", "completed", "cancelled",
+  "requested", "matched", "driver_arrived", "started", "dropped_off", "completed", "cancelled",
 ]);
 
 // One passenger asking for a seat. Fare stays null until it is quoted.

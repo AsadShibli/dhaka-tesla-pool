@@ -83,12 +83,13 @@ export function Notice({ kind = "error", children }) {
   );
 }
 
-// requested -> matched -> driver_arrived -> started -> completed. Cancelled is shown as a badge instead.
+// requested -> matched -> driver_arrived -> started -> dropped_off -> completed. Cancelled is shown as a badge instead.
 const STEPS = [
   ["requested", "Requested"],
   ["matched", "Matched"],
   ["driver_arrived", "Arrived"],
   ["started", "In progress"],
+  ["dropped_off", "Payment"],
   ["completed", "Completed"],
 ];
 

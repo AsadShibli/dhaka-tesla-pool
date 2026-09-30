@@ -12,8 +12,10 @@ const HINT = {
   matched: "You have a seat in Bullet. Jashim is on the way to the pickup.",
   driver_arrived: "Bullet is at the pickup. You can still cancel until the trip starts.",
   started: "On the road. Cancelling is closed now.",
-  completed: "Trip done. Pay by TeslaPay or cash.",
+  dropped_off: "You're at your drop-off. Pay your fare so Jashim can close the trip.",
+  completed: "Trip complete. Thanks for riding Bullet.",
 };
+const PAID_HINT = "Paid, thank you. Jashim closes the trip once every rider has paid.";
 
 // The newest ride that still needs something: a seat, the trip, or payment.
 export function CurrentRide({ ride, nameOf }) {
@@ -33,7 +35,7 @@ export function CurrentRide({ ride, nameOf }) {
   return (
     <Card
       title="Current ride"
-      subtitle={HINT[ride.status]}
+      subtitle={ride.status === "dropped_off" && ride.paidMethod ? PAID_HINT : HINT[ride.status]}
       action={<StatusBadge status={ride.status} />}
     >
       <Lifecycle status={ride.status} />

@@ -12,9 +12,9 @@ import { quote } from "../../lib/quote";
 import { useAreas } from "../../lib/useAreas";
 import { usePoll } from "../../lib/usePoll";
 
-const OPEN = new Set(["requested", "matched", "driver_arrived", "started"]);
+const OPEN = new Set(["requested", "matched", "driver_arrived", "started", "dropped_off"]);
 
-// Still needs attention: on the road, or completed but not paid yet.
+// Still needs attention: on the road, waiting for payment, or an older trip completed before paying.
 function needsAttention(ride) {
   return OPEN.has(ride.status) || (ride.status === "completed" && !ride.paidMethod);
 }
@@ -54,7 +54,7 @@ export function PassengerDashboard() {
         <Feed />
       </div>
 
-      <Card title="Open rides" subtitle="Cancel before the trip starts. Pay once it is completed.">
+      <Card title="Open rides" subtitle="Cancel before the trip starts. Pay once you are dropped off.">
         <Notice>{error}</Notice>
         {loading ? <Loading rows={3} /> : active.length === 0 ? (
           <Empty title="No open rides">Finished trips are in your ride history.</Empty>
