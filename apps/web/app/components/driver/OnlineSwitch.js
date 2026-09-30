@@ -33,7 +33,7 @@ export function OnlineSwitch({ vehicle, loading, error: loadError, reload }) {
       tone: "green",
       icon: "Power",
       title: "You're online",
-      detail: count ? `${count} rider${count === 1 ? " is" : "s are"} waiting. Accept the ones that fit.` : "No one is waiting yet. New requests will pop up here.",
+      detail: count ? `${count} passenger${count === 1 ? " is" : "s are"} waiting. Accept the ones that fit.` : "No one is waiting yet. New requests will pop up here.",
     });
   }
 

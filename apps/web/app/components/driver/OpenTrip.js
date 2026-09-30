@@ -12,15 +12,15 @@ import { taka } from "../../lib/format";
 const NEXT = {
   accepted: { path: "arrive", label: "Mark arrived at pickup", icon: Icon.Pin, className: "btn-primary" },
   driver_arrived: { path: "start", label: "Start trip", icon: Icon.Bolt, className: "btn-success" },
-  started: { path: "drop-off", label: "Drop off riders", icon: Icon.Flag, className: "btn-dark" },
+  started: { path: "drop-off", label: "Drop off passengers", icon: Icon.Flag, className: "btn-dark" },
   dropped_off: { path: "complete", label: "Complete trip", icon: Icon.CheckCircle, className: "btn-success" },
 };
 
 const SUBTITLE = {
-  accepted: "More riders can still join if they fit.",
+  accepted: "More passengers can still join if they fit.",
   driver_arrived: "Seats are locked once you reach the pickup.",
-  started: "On the road. Drop riders off at their stops.",
-  dropped_off: "Riders are out. Collect every fare, then complete the trip.",
+  started: "On the road. Drop passengers off at their stops.",
+  dropped_off: "Passengers are out. Collect every fare, then complete the trip.",
 };
 
 function PaymentBadge({ rider, status }) {
@@ -51,7 +51,7 @@ export function OpenTrip({ pool, loading, error: loadError, nameOf }) {
         title: "Trip completed",
         subtitle: "Every fare is in. Bullet is free for the next ride.",
         rows: [
-          ["Riders", String(result.body.riders)],
+          ["Passengers", String(result.body.riders)],
           ["Fares collected", taka(result.body.collectedPoisha)],
         ],
         action: "Back to the dashboard",
@@ -103,7 +103,7 @@ export function OpenTrip({ pool, loading, error: loadError, nameOf }) {
       <div className="table-wrap">
         <table>
           <thead>
-            <tr><th>Rider</th><th>Route</th><th>Seats</th><th>Fare</th><th>Payment</th></tr>
+            <tr><th>Passenger</th><th>Route</th><th>Seats</th><th>Fare</th><th>Payment</th></tr>
           </thead>
           <tbody>
             {riders.map((rider) => (

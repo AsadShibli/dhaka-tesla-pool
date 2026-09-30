@@ -97,7 +97,7 @@ export function Notifier() {
       notify({
         tone: "blue",
         icon: "Bell",
-        title: "New ride request",
+        title: "New passenger request",
         detail: `${ride.passengerName}: ${nameOf(ride.pickupCode)} → ${nameOf(ride.destinationCode)} · ${ride.seats} seat${ride.seats === 1 ? "" : "s"}`,
       });
     }

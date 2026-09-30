@@ -31,7 +31,7 @@ export function DriverDashboard() {
       <div className="page-head">
         <div>
           <h1>Good to see you, {user.name}</h1>
-          <p>Accept riders who fit, then take the trip from pickup to drop-off.</p>
+          <p>Accept passengers who fit, then take the trip from pickup to drop-off.</p>
         </div>
       </div>
 

@@ -39,7 +39,7 @@ export function WaitingRides({ rides, loading, error: loadError, vehicle, vehicl
   }
 
   return (
-    <Card title="Waiting rides" subtitle="Requests nobody has accepted yet. Shared riders need the same pickup and drop-offs within 2 km.">
+    <Card title="Waiting rides" subtitle="Requests nobody has accepted yet. Shared passengers need the same pickup and drop-offs within 2 km.">
       <Notice>{loadError || error}</Notice>
       {vehicleLoading ? <Loading rows={3} /> : !vehicle?.isOnline ? (
         <Empty icon={Icon.Power} title="You're offline">Go online to see who is waiting. New requests will pop up as they arrive.</Empty>
