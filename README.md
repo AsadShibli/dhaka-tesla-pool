@@ -4,6 +4,8 @@ Share a seat. Split the fare. Survive Dhaka traffic.
 
 Passengers request a seat from one Dhaka area to another. Jashim, the driver, can carry two of them in Bullet, his three-seat Tesla, when both start in the same area and their drop-offs are at most 2 km apart. Each passenger pays their own fare, 15% less when shared, and sees only their own ride.
 
+> **Live demo:** https://tesla-pool-web.onrender.com (free plan: the first visit after a quiet spell takes ~30–60 s to wake up). Sign in with any [demo login](#demo-logins).
+>
 > **Demo video:** _not recorded yet. Replace this line with the Loom link._ The outline is in [Video outline](#video-outline).
 
 ![Driver dashboard: Nusrat and Rafiq sharing Bullet](docs/screenshots/driver-dashboard.png)
@@ -179,7 +181,7 @@ The test [last-seat.test.js](apps/api/test/last-seat.test.js) fires both accepts
 | Migrations | **Own `migrate.js`**, one SQL file per table | drizzle-kit, node-pg-migrate | 60 lines, runs before the API, advisory lock, one transaction per file | Need down-migrations or many environments |
 | Auth | **JWT in an httpOnly cookie**, bcrypt | Sessions in Postgres, NextAuth, Clerk | No session table for a demo; cookie not readable by JS; 7-day expiry | Need revocation or "sign out everywhere" (move to server sessions) |
 | Tests | **`node:test`** against the running API | Jest, Vitest, Supertest | Zero dependencies; tests hit the real Postgres so locks and constraints are actually exercised | Need mocking, watch mode, or coverage reports |
-| Hosting | **Docker Compose**; Render blueprint included | Railway, Fly.io, a VPS | Free, reproducible on any machine with Docker | A free host with a persistent Postgres becomes available to the team |
+| Hosting | **Render free plan** (live); Docker Compose locally | Railway, Fly.io, a VPS | Free, deploys on every push to master, Postgres in the same region; Compose gives the same stack on any machine | Free Postgres expires after 30 days, and cold starts hurt real users: move to a paid instance |
 
 ## Project structure
 
@@ -310,10 +312,29 @@ All bodies are JSON. Errors are `{ "error": "…" }` with 400 (bad input), 401 (
 
 ## Deployment
 
-**No public URL yet.** Free backend hosting with a persistent Postgres needs an account in the owner's name (Render, Railway, Neon…), and this brief forbids paying. Two ways to ship it:
+### Live on Render (free plan)
 
-1. **Reproducible Docker deploy (works today).** On any machine or free VM with Docker: clone, set a real `JWT_SECRET` in `.env`, `docker compose up -d --build`. Put a reverse proxy with HTTPS in front of port 3000; only the web port needs to be public.
-2. **Render free plan.** [render.yaml](render.yaml) describes the database, API, and site. In Render, choose *New → Blueprint* and pick this repo, then set `API_URL` on `tesla-pool-web` to the API's URL. It has not been deployed from here. Free services sleep after inactivity (the first request takes ~30–60 s), and the free Postgres expires after 30 days.
+| Piece | Render resource | URL |
+| --- | --- | --- |
+| Site (open this) | `tesla-pool-web`, Node web service | https://tesla-pool-web.onrender.com |
+| API | `tesla-pool-api`, Node web service | https://tesla-pool-api-bit6.onrender.com/health |
+| Database | `tesla-pool-db`, Postgres 16 | internal only |
+
+All three run in **Singapore**, the closest Render region to Dhaka, and deploy automatically on every push to `master`. The API runs `migrate.js` before it listens, so a new migration ships with the code. The browser only talks to the site; the site forwards `/api/*` to the API over HTTPS, so the login cookie stays on the site's own domain.
+
+Checked after deploying: the four cast logins, Jashim online, Nusrat and Rafiq pooled (৳74.37 and ৳72.25), Shirin refused as too far, arrive → start → complete, TeslaPay and cash payments, and trip history in the browser.
+
+**Free-plan limits**
+
+- Services **sleep after 15 minutes idle**; the next visit takes ~30–60 s while both wake. Open the site once before a demo.
+- The free Postgres **expires on 2026-10-30** (30 days) and Render allows one free Postgres per workspace. Before then, upgrade it or create a new one and update `DATABASE_URL`; the migrations and cast rebuild everything.
+- Free instance hours are shared across the workspace's services each month.
+
+**Recreate it on another account.** [render.yaml](render.yaml) describes the same three resources. In Render: *New → Blueprint*, pick this repo, deploy, then set `API_URL` on `tesla-pool-web` to the API's URL and redeploy the site. The repo is private, so Render's GitHub app needs access to it.
+
+### Anywhere with Docker
+
+On any machine or VM with Docker: clone, set a real `JWT_SECRET` in `.env`, `docker compose up -d --build`. Put a reverse proxy with HTTPS in front of port 3000; only the web port needs to be public.
 
 ## Assumptions
 
@@ -334,7 +355,7 @@ All bodies are JSON. Errors are `{ "error": "…" }` with 400 (bad input), 401 (
 **Known limitations**
 
 - No password reset, email verification, or rate limiting on login.
-- The cookie is not marked `Secure` (the demo runs on http://localhost); set it behind HTTPS.
+- The cookie is not marked `Secure`, so it also works on http://localhost. The live site is HTTPS-only; mark it `Secure` in production.
 - No driver ratings, no routing or ETA, no live location.
 - Straight-line distance can under-charge a detour; the 2 km rule keeps detours small.
 - API tests clean up through `docker exec` into the Compose DB container.

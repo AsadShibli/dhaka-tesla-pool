@@ -1,20 +1,30 @@
-# Render Blueprint (free plans). Not deployed by us: it needs your Render account.
-# After the first deploy, set API_URL on tesla-pool-web to the API's URL, e.g. https://tesla-pool-api.onrender.com
+# Render Blueprint (free plans). Matches the live deploy: Node runtime, Singapore, builds from the repo root
+# so npm workspaces can link packages/domain. After the first deploy, set API_URL on tesla-pool-web
+# to the API's public URL (Render adds a suffix, e.g. https://tesla-pool-api-xxxx.onrender.com).
 databases:
   - name: tesla-pool-db
     plan: free
+    region: singapore
+    postgresMajorVersion: "16"
     databaseName: tesla_pool
     user: tesla
 
 services:
   - type: web
     name: tesla-pool-api
-    runtime: docker
+    runtime: node
     plan: free
-    dockerContext: .
-    dockerfilePath: ./apps/api/Dockerfile
+    region: singapore
+    branch: master
+    buildCommand: npm ci --workspace api --omit=dev
+    # Migrations and the demo cast run first; a failed migration stops the start.
+    startCommand: node apps/api/src/db/migrate.js && node apps/api/src/server.js
     healthCheckPath: /health
     envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
       - key: PORT
         value: "4000"
       - key: API_PORT
@@ -28,12 +38,16 @@ services:
 
   - type: web
     name: tesla-pool-web
-    runtime: docker
+    runtime: node
     plan: free
-    dockerContext: .
-    dockerfilePath: ./apps/web/Dockerfile
+    region: singapore
+    branch: master
+    buildCommand: npm ci --workspace web --include=dev && npm run build --workspace web
+    startCommand: npm run start --workspace web
     healthCheckPath: /api/health
     envVars:
+      - key: NODE_VERSION
+        value: "22"
       - key: PORT
         value: "3000"
       - key: API_URL
