@@ -8,7 +8,8 @@ import { passwordMatches } from "./passwords.js";
 export function registerLogin(app) {
   app.post("/login", async (req, res, next) => {
     try {
-      const email = req.body?.email;
+      // Signup stores emails lower-case, so NUSRAT@... finds the same account.
+      const email = String(req.body?.email ?? "").trim().toLowerCase();
       const password = req.body?.password;
       if (!email || !password) {
         return res.status(400).json({ error: "email and password are required" });
