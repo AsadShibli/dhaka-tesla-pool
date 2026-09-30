@@ -18,12 +18,19 @@ import { registerWaiting } from "./rides/waiting.js";
 import { registerOnline } from "./vehicles/online.js";
 import { registerOpenPool } from "./rides/openPool.js";
 
+// Login cookies cannot be signed without this. Fail at boot, not on the first sign-in.
+if (!process.env.JWT_SECRET) {
+  console.error("JWT_SECRET is not set. Copy .env.example or set it in docker-compose.yml.");
+  process.exit(1);
+}
+
 // The HTTP app. Ride routes get added in later slices.
 const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "10kb" }));
-// One line per request: method, path, status, and time taken.
+// One line per request: method, path, status, and time taken. Health checks are skipped.
 app.use((req, res, next) => {
+  if (req.path === "/health") return next();
   const started = Date.now();
   res.on("finish", () => {
     console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${Date.now() - started}ms`);
