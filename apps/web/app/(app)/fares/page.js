@@ -1,7 +1,6 @@
 "use client";
 
 import { Icon } from "../../components/Icons";
-import { FareChart } from "../../components/FareChart";
 import { Card, Loading } from "../../components/ui";
 import { BASE_POISHA, POISHA_PER_100M, POOL_PERCENT } from "domain/fare.js";
 import { MAX_DROP_GAP_METERS } from "domain/match.js";
@@ -26,7 +25,7 @@ shared fare     = ${subtotal} − ${discount} = ${fare.pooled} poisha   (${taka(
 }
 
 export default function FaresPage() {
-  const { areas, byCode } = useAreas();
+  const { byCode } = useAreas();
   const nusrat = quote(byCode, "banani", "mohakhali");
   const rafiq = quote(byCode, "banani", "gulshan-1");
   const gap = dropGapMeters(byCode, { destinationCode: "mohakhali" }, { destinationCode: "gulshan-1" });
@@ -75,12 +74,6 @@ export default function FaresPage() {
           ) : <Loading rows={6} />}
         </Card>
       </div>
-
-      {areas.length ? (
-        <Card title="Fares from Banani" subtitle="Solo and shared fare to every area">
-          <FareChart areas={areas} byCode={byCode} pickupCode="banani" destinationCode="mohakhali" />
-        </Card>
-      ) : null}
     </>
   );
 }
