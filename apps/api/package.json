@@ -6,7 +6,7 @@
     "migrate": "node src/db/migrate.js",
     "start": "node src/db/migrate.js && node src/server.js",
     "dev": "node src/server.js",
-    "test": "node --test --test-concurrency=1 test/last-seat.test.js test/complete-early.test.js test/own-ride.test.js test/cancel-late.test.js ../../packages/domain/fares.test.js"
+    "test": "node --test --test-concurrency=1 test/last-seat.test.js test/complete-early.test.js test/own-ride.test.js test/cancel-late.test.js test/pool-share.test.js ../../packages/domain/fares.test.js ../../packages/domain/match.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
