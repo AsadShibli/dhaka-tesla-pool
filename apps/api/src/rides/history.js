@@ -31,6 +31,7 @@ function ridesOf(passengerId) {
     destinationCode: rideRequests.destinationCode,
     farePoisha: rideRequests.farePoisha,
     createdAt: rideRequests.createdAt,
+    poolRiders: sql`(SELECT count(*)::int FROM pool_members pm WHERE pm.pool_id = ride_requests.pool_id)`,
     paidMethod: payments.method,
   }).from(rideRequests).leftJoin(payments, eq(payments.rideRequestId, rideRequests.id)).where(and(
     eq(rideRequests.passengerId, passengerId),
@@ -47,8 +48,8 @@ function poolsOf(driverId) {
     capacity: pools.capacity,
     createdAt: pools.createdAt,
     // Riders still in the pool at the end, and what they owe in total.
-    riders: sql`(SELECT count(*)::int FROM pool_members pm WHERE pm.pool_id = ${pools.id})`,
-    fareTotalPoisha: sql`(SELECT coalesce(sum(pm.fare_poisha), 0)::int FROM pool_members pm WHERE pm.pool_id = ${pools.id})`,
+    riders: sql`(SELECT count(*)::int FROM pool_members pm WHERE pm.pool_id = pools.id)`,
+    fareTotalPoisha: sql`(SELECT coalesce(sum(pm.fare_poisha), 0)::int FROM pool_members pm WHERE pm.pool_id = pools.id)`,
   }).from(pools).where(and(
     eq(pools.driverId, driverId),
     inArray(pools.status, finished),

@@ -22,7 +22,7 @@ export function registerMyRides(app) {
           farePoisha: rideRequests.farePoisha,
           createdAt: rideRequests.createdAt,
           // How many riders share this Tesla. A count, not their names or fares.
-          poolRiders: sql`(SELECT count(*)::int FROM pool_members pm WHERE pm.pool_id = ${rideRequests.poolId})`,
+          poolRiders: sql`(SELECT count(*)::int FROM pool_members pm WHERE pm.pool_id = ride_requests.pool_id)`,
           // Null until the passenger pays, so a refresh does not offer payment twice.
           paidMethod: payments.method,
         })
