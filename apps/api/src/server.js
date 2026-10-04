@@ -21,8 +21,7 @@ import { registerOpenPool } from "./rides/openPool.js";
 
 // Login cookies cannot be signed without this. Fail at boot, not on the first sign-in.
 if (!process.env.JWT_SECRET) {
-  console.error("JWT_SECRET is not set. Copy .env.example or set it in docker-compose.yml.");
-  process.exit(1);
+  throw new Error("JWT_SECRET is not set. Copy .env.example or set it in docker-compose.yml.");
 }
 
 // The HTTP app. Ride routes get added in later slices.
@@ -78,9 +77,13 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: "something went wrong" });
 });
 
-// Falls back to the port in .env.example when API_PORT is unset.
-const port = Number(process.env.API_PORT) || 4000;
+// Vercel runs the exported app as a function. Everywhere else (Docker, local) it listens itself.
+export default app;
 
-app.listen(port, () => {
-  console.log(`api listening on ${port}`);
-});
+if (!process.env.VERCEL) {
+  // Falls back to the port in .env.example when API_PORT is unset.
+  const port = Number(process.env.API_PORT) || 4000;
+  app.listen(port, () => {
+    console.log(`api listening on ${port}`);
+  });
+}
