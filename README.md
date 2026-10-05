@@ -4,7 +4,7 @@ Share a seat. Split the fare. Survive Dhaka traffic.
 
 Passengers request a seat from one Dhaka area to another. Jashim, the driver, can carry two of them in Bullet, his three-seat Tesla, when both start in the same area and their drop-offs are at most 2 km apart. Each passenger pays their own fare, 15% less when shared, and sees only their own ride.
 
-> **Live demo:** https://tesla-pool-web.onrender.com (free plan: the first visit after a quiet spell takes ~30–60 s to wake up). Sign in with any [demo login](#demo-logins).
+> **Live demo:** https://tesla-pool-web-eight.vercel.app — sign in with any [demo login](#demo-logins). No cold start to wait through: the first page loads in about a second.
 >
 > **Demo video:** _not recorded yet. Replace this line with the Loom link._ The outline is in [Video outline](#video-outline).
 
@@ -184,7 +184,7 @@ The test [last-seat.test.js](apps/api/test/last-seat.test.js) fires both accepts
 | Migrations | **Own `migrate.js`**, one SQL file per table | drizzle-kit, node-pg-migrate | 60 lines, runs before the API, advisory lock, one transaction per file | Need down-migrations or many environments |
 | Auth | **JWT in an httpOnly cookie**, bcrypt | Sessions in Postgres, NextAuth, Clerk | No session table for a demo; cookie not readable by JS; 7-day expiry | Need revocation or "sign out everywhere" (move to server sessions) |
 | Tests | **`node:test`** against the running API | Jest, Vitest, Supertest | Zero dependencies; tests hit the real Postgres so locks and constraints are actually exercised | Need mocking, watch mode, or coverage reports |
-| Hosting | **Render free plan** (live); Docker Compose locally | Railway, Fly.io, a VPS | Free, deploys on every push to master, Postgres in the same region; Compose gives the same stack on any machine | Free Postgres expires after 30 days, and cold starts hurt real users: move to a paid instance |
+| Hosting | **Vercel** functions + **Neon** Postgres (live); Docker Compose locally | Render, Railway, Fly.io, a VPS | Free, nothing sleeps, database never expires, all in Singapore; Compose gives the same stack on any machine | Long-lived connections (WebSockets) or steady traffic make an always-on server cheaper than functions |
 
 ## Project structure
 
@@ -209,7 +209,8 @@ packages/
   domain/                   distance, fare, match + unit tests
 docs/                       ERD, architecture and lifecycle diagrams, screenshots
 docker-compose.yml          db, api, web with health checks
-render.yaml                 optional free-plan deploy
+apps/*/vercel.json          live deploy (Vercel functions)
+render.yaml                 earlier Render deploy, kept as an alternative
 ```
 
 ## Run it
@@ -318,25 +319,39 @@ All bodies are JSON. Errors are `{ "error": "…" }` with 400 (bad input), 401 (
 
 ## Deployment
 
-### Live on Render (free plan)
+### Live on Vercel + Neon (free plans)
 
-| Piece | Render resource | URL |
+| Piece | Where | URL |
 | --- | --- | --- |
-| Site (open this) | `tesla-pool-web`, Node web service | https://tesla-pool-web.onrender.com |
-| API | `tesla-pool-api`, Node web service | https://tesla-pool-api-bit6.onrender.com/health |
-| Database | `tesla-pool-db`, Postgres 16 | internal only |
+| Site (open this) | Vercel project `tesla-pool-web`, Next.js | https://tesla-pool-web-eight.vercel.app |
+| API | Vercel project `tesla-pool-api`, Express as a function | https://tesla-pool-api-eight.vercel.app/health |
+| Database | Neon Postgres `tesla-pool-db`, added through the Vercel integration | not public |
 
-All three run in **Singapore**, the closest Render region to Dhaka, and deploy automatically on every push to `master`. The API runs `migrate.js` before it listens, so a new migration ships with the code. The browser only talks to the site; the site forwards `/api/*` to the API over HTTPS, so the login cookie stays on the site's own domain.
+All three run in **Singapore** (`sin1`), the closest region to Dhaka. The site forwards `/api/*` to the API over HTTPS, so the login cookie stays on the site's own domain.
 
-Checked after deploying: the four cast logins, Jashim online, Nusrat and Rafiq pooled (৳74.37 and ৳72.25), Shirin refused as too far, arrive → start → drop off, TeslaPay and cash payments, complete, and trip history in the browser.
+**Why it moved off Render.** Render's free web services sleep after 15 idle minutes, and this app is two services, so the first visit had to wake both in turn: 30–60 s, and sometimes the site never came up. Its free Postgres also expires after 30 days. On Vercel nothing sleeps (a function starts in well under a second), and Neon's free database does not expire; it pauses when idle and resumes in about half a second.
 
-**Free-plan limits**
+**How the API runs as a function.** `apps/api/src/server.js` exports the Express app; Vercel serves it as one function, and Docker and local runs still call `app.listen`. Each function instance keeps a pool of at most 3 connections. Migrations and the demo cast run in the API's **build step** (`apps/api/vercel.json`), over Neon's direct (unpooled) URL because the migrator's advisory lock needs one session.
 
-- Services **sleep after 15 minutes idle**; the next visit takes ~30–60 s while both wake. Open the site once before a demo.
-- The free Postgres **expires on 2026-10-30** (30 days) and Render allows one free Postgres per workspace. Before then, upgrade it or create a new one and update `DATABASE_URL`; the migrations and cast rebuild everything.
-- Free instance hours are shared across the workspace's services each month.
+Measured after the move: a story request through the site takes **~190 ms** typical (it was ~1.7 s while the functions sat in the US default region, before both were pinned to Singapore). Checked: the four cast logins, offline driver sees no requests, Nusrat and Rafiq pooled, Shirin refused, arrive → start → drop off, completing refused until Rafiq paid, TeslaPay and cash, complete, and trip history in the browser.
 
-**Recreate it on another account.** [render.yaml](render.yaml) describes the same three resources. In Render: *New → Blueprint*, pick this repo, deploy, then set `API_URL` on `tesla-pool-web` to the API's URL and redeploy the site. The repo is private, so Render's GitHub app needs access to it.
+**Deploying a change.** The projects are not connected to GitHub yet (that needs a GitHub login connection on the Vercel account). From the repo root:
+
+```bash
+npx vercel link --yes --project tesla-pool-api && npx vercel deploy --prod
+```
+
+```bash
+npx vercel link --yes --project tesla-pool-web && npx vercel deploy --prod
+```
+
+Settings that live in Vercel, not the repo: `JWT_SECRET` and the Neon `DATABASE_URL` / `DATABASE_URL_UNPOOLED` on the API; `API_URL` on the site; function region `sin1` on both.
+
+**Free-plan limits:** Neon free gives 0.5 GB storage and a monthly compute allowance; Vercel Hobby is for non-commercial use.
+
+### Render (earlier, still possible)
+
+[render.yaml](render.yaml) describes the same app on Render's free plan (*New → Blueprint*, then set `API_URL` on the site). Expect the sleep and 30-day database limits above.
 
 ### Anywhere with Docker
 

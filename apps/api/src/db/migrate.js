@@ -12,7 +12,8 @@ const seedFile = join(here, "seed", "cast.sql");
 const LOCK_ID = 4141;
 
 async function main() {
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+  // The advisory lock needs a direct session; a pooled (pgbouncer) URL would drop it between queries.
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL });
   await client.connect();
   try {
     await client.query("SELECT pg_advisory_lock($1)", [LOCK_ID]);
