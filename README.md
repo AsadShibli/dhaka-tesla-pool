@@ -335,7 +335,7 @@ All three run in **Singapore** (`sin1`), the closest region to Dhaka. The site f
 
 Measured after the move: a story request through the site takes **~190 ms** typical (it was ~1.7 s while the functions sat in the US default region, before both were pinned to Singapore). Checked: the four cast logins, offline driver sees no requests, Nusrat and Rafiq pooled, Shirin refused, arrive → start → drop off, completing refused until Rafiq paid, TeslaPay and cash, complete, and trip history in the browser.
 
-**Deploying a change.** The projects are not connected to GitHub yet (that needs a GitHub login connection on the Vercel account). From the repo root:
+**Deploying a change.** Push to `master`. Both Vercel projects are connected to this repo and build their own folder (`apps/api`, `apps/web`); other branches get preview deployments. The old Render services are suspended. To deploy from a machine without pushing, from the repo root:
 
 ```bash
 npx vercel link --yes --project tesla-pool-api && npx vercel deploy --prod
